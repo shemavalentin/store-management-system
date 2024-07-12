@@ -1,4 +1,4 @@
-import React from "react";
+import { useState } from "react";
 
 function ProductCategoryRow({ category }) {
   return (
@@ -23,11 +23,17 @@ function ProductRow({ product }) {
 }
 
 // The component that includes the table rows and rows name and price
-function ProductTable({ products }) {
+function ProductTable({ products, filterText, inStockOnly }) {
   const rows = [];
   let lastCategory = null;
 
   products.forEach((product) => {
+    if (product.name.toLowerCase().indexOf(filterText.toLowerCase()) === -1) {
+      return;
+    }
+    if (inStockOnly && !product.stocked) {
+      return;
+    }
     if (product.category !== lastCategory) {
       rows.push(
         <ProductCategoryRow
@@ -55,12 +61,26 @@ function ProductTable({ products }) {
 }
 
 // Building a subcomponent Seach to be passed as a prop in the parent components
-function Search() {
+function SearchBar({
+  filterText,
+  inStockOnly,
+  onFilterTextChange,
+  onInStockOnlyChange,
+}) {
   return (
     <form>
-      <input type="text" placeholder="Search..." />
+      <input
+        type="text"
+        value={filterText}
+        placeholder="Search..."
+        onChange={(e) => onFilterTextChange(e.target.value)}
+      />
       <label>
-        <input type="checkbox" /> <br />
+        <br />
+        <input
+          type="checkbox"
+          onChange={(e) => onInStockOnlyChange(e.target.value)}
+        />
         {""}
         Only show products in stock
       </label>
@@ -70,11 +90,22 @@ function Search() {
 
 // Building a parent component to receive other components as props
 // that is the one covers athers on the components hierachy.
-function FilterableProductTable() {
+function FilterableProductTable({ products }) {
+  const [filterText, setFilterText] = useState("");
+  const [inStockOnly, setInStockOnly] = useState(false);
   return (
     <div>
-      <Search />
-      <ProductTable products={PRODUCTS} />
+      <SearchBar
+        filterText={filterText}
+        inStockOnly={inStockOnly}
+        onFilterTextChange={setFilterText}
+        onInStockOnlyChange={setInStockOnly}
+      />
+      <ProductTable
+        products={products}
+        filterText={filterText}
+        inStockOnly={inStockOnly}
+      />
     </div>
   );
 }
@@ -88,7 +119,9 @@ const PRODUCTS = [
   { category: "Vegetables", price: "$1", stocked: true, name: "Peas" },
 ];
 
-export default FilterableProductTable;
+export default function App() {
+  return <FilterableProductTable products={PRODUCTS} />;
+}
 
 // While buiding applications you need to divide the system into subcomponents
 
